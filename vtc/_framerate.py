@@ -101,6 +101,15 @@ class Framerate:
             and self._dropframe == other._dropframe
         )
 
+    def __hash__(self) -> int:
+        """
+        Framerate is logically immutable, so it must be hashable. Defining __eq__
+        without __hash__ caused Python to set __hash__ = None, which in turn made
+        Python 3.11+ reject Framerate instances as dataclass field defaults
+        (see _Rates below).
+        """
+        return hash((self._value, self._ntsc, self._dropframe))
+
     @property
     def playback(self) -> fractions.Fraction:
         """
@@ -287,6 +296,10 @@ FramerateSource = Union[Framerate, str, Tuple[int, int], fractions.Fraction, flo
 
 
 # We'll use a frozen dataclass for this so the values cannot be changed.
+# Each field uses ``default_factory`` rather than a bare instance default. Python
+# 3.11+ rejects unhashable instances as dataclass defaults, and even though
+# Framerate is now hashable (see __hash__ above), default_factory is the
+# canonical pattern for "construct a fresh instance for each new dataclass".
 @dataclasses.dataclass(frozen=True)
 class _Rates:
     """
@@ -295,34 +308,46 @@ class _Rates:
     """
 
     # 23.98 fps NTSC.
-    F23_98: Framerate = Framerate(23.98, ntsc=True)
+    F23_98: Framerate = dataclasses.field(
+        default_factory=lambda: Framerate(23.98, ntsc=True)
+    )
 
     # 24 fps.
-    F24: Framerate = Framerate(24)
+    F24: Framerate = dataclasses.field(default_factory=lambda: Framerate(24))
 
     # 29.97 fps NTSC.
-    F29_97_NDF: Framerate = Framerate(29.97, ntsc=True)
+    F29_97_NDF: Framerate = dataclasses.field(
+        default_factory=lambda: Framerate(29.97, ntsc=True)
+    )
 
     # 29.97 fps DROP FRAME.
-    F29_97_DF: Framerate = Framerate(29.97, dropframe=True)
+    F29_97_DF: Framerate = dataclasses.field(
+        default_factory=lambda: Framerate(29.97, dropframe=True)
+    )
 
     # 30 fps NTSC.
-    F30: Framerate = Framerate(30)
+    F30: Framerate = dataclasses.field(default_factory=lambda: Framerate(30))
 
     # 47.95 fps NTSC.
-    F47_95: Framerate = Framerate(47.95, ntsc=True)
+    F47_95: Framerate = dataclasses.field(
+        default_factory=lambda: Framerate(47.95, ntsc=True)
+    )
 
     # 48 fps NTSC.
-    F48: Framerate = Framerate(48)
+    F48: Framerate = dataclasses.field(default_factory=lambda: Framerate(48))
 
     # 59.94 fps NTSC.
-    F59_94_NDF: Framerate = Framerate(59.94, ntsc=True)
+    F59_94_NDF: Framerate = dataclasses.field(
+        default_factory=lambda: Framerate(59.94, ntsc=True)
+    )
 
     # 59.94 fps NTSC DROP FRAME.
-    F59_94_DF: Framerate = Framerate(59.94, dropframe=True)
+    F59_94_DF: Framerate = dataclasses.field(
+        default_factory=lambda: Framerate(59.94, dropframe=True)
+    )
 
     # 60 fps NTSC.
-    F60: Framerate = Framerate(60)
+    F60: Framerate = dataclasses.field(default_factory=lambda: Framerate(60))
 
 
 RATE: _Rates = _Rates()
